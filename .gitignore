@@ -1,0 +1,18 @@
+# PII sensitive file (user customizable)
+.env
+
+# Data folder content
+data/*
+!data/.gitkeep
+
+# IDE files
+.idea/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# venv (if running out of docker)
+.venv
+venv/

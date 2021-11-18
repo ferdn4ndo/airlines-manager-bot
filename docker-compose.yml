@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  airlines-manager-bot:
+    container_name: airlines-manager-bot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./src:/code/
+      - ./data:/data/

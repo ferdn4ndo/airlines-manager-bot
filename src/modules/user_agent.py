@@ -35,11 +35,16 @@ def get_random_user_agent() -> str:
     return random.choice(COMMON_USER_AGENTS)
 
 
-def get_base_headers() -> Dict:
+def get_base_headers(extra_headers: Dict = None) -> Dict:
     """
     Retrieves a base dict of headers with a random valid user agent.
     :return:
     """
-    return {
+    user_agent_header = {
         'User-Agent': get_random_user_agent(),
     }
+
+    if extra_headers is None:
+        return user_agent_header
+
+    return dict(user_agent_header, **extra_headers)

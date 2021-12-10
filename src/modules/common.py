@@ -1,5 +1,8 @@
 import csv
+import json
+import os.path
 import re
+from typing import Dict
 
 from bs4 import BeautifulSoup
 
@@ -30,6 +33,9 @@ def save_dict_to_csv(input_dict, output_filepath):
     :param output_filepath:
     :return:
     """
+    folder = os.path.dirname(output_filepath)
+    os.makedirs(folder, exist_ok=True)
+
     with open(output_filepath, 'w', newline='') as output_csv:
         csv_writer = csv.writer(output_csv, dialect='excel')
 
@@ -39,3 +45,17 @@ def save_dict_to_csv(input_dict, output_filepath):
         # Data
         for row in input_dict:
             csv_writer.writerow(row.values())
+
+
+def save_dict_to_json(input_dict: Dict, output_filepath: str):
+    """
+    Saves a dictionary to a JSON file
+    :param input_dict:
+    :param output_filepath:
+    :return:
+    """
+    folder = os.path.dirname(output_filepath)
+    os.makedirs(folder, exist_ok=True)
+
+    with open(output_filepath, 'w') as f:
+        json.dump(input_dict, f, ensure_ascii=False, indent=4)

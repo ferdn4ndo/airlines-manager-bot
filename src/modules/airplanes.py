@@ -6,7 +6,10 @@ from bs4.element import ResultSet
 from requests.cookies import RequestsCookieJar
 from typing import Tuple, Dict, List
 
-from .common import check_has_next_page, sanitize_text, save_dict_to_csv
+from .file import save_dict_to_csv
+from .logger import log, save_error_dump, LogLevels
+from .pagination import check_has_next_page
+from .strings import sanitize_text
 from .user_agent import get_base_headers
 
 
@@ -27,7 +30,7 @@ def fetch_all_airplanes(cookies: RequestsCookieJar) -> List:
         page += 1
 
     save_dict_to_csv(airplanes, os.environ['AIRPLANES_SUMMARY_FILEPATH'])
-    print(
+    log(
         "Finished fetching {} airplanes! (summary exported to {})".format(
             len(airplanes),
             os.environ['AIRPLANES_SUMMARY_FILEPATH']
@@ -53,8 +56,13 @@ def get_page_airplanes(cookies: RequestsCookieJar, page: int = 1) -> Tuple:
     airplanes_bs = BeautifulSoup(airplanes.text, 'html.parser')
 
     airplanes_table = airplanes_bs.find('table', attrs={'class': 'aircraftListViewTable'})
+    if airplanes_table is None:
+        log("Aborting airplanes reading as the airplanes table was not found!", LogLevels.LOG_LEVEL_ERROR)
+        save_error_dump(dump=airplanes.text, tag='airplanes_table_not_found')
+        raise ReferenceError("Table with class aircraftListViewTable was not found")
+
     airplanes_rows = airplanes_table.find_all('tr')
-    print("Found a total of {} rows in page {}.".format(len(airplanes_rows), page))
+    log("Found a total of {} rows in page {}.".format(len(airplanes_rows), page))
     airplanes = [parse_airplane_row(row) for row in airplanes_rows]
     airplanes = [airplane for airplane in airplanes if not len(airplane) == 0]
 
@@ -70,15 +78,15 @@ def parse_airplane_row(row: ResultSet) -> Dict:
     if len(row.find_all('th')) > 0:
         return {}
 
-    aicraft_name_cell = row.find('span', attrs={'class': 'editAircraftName'})
+    airplane_name_cell = row.find('span', attrs={'class': 'editAircraftName'})
     cells = row.find_all('td')
 
     return {
-        'id': int(str(aicraft_name_cell['data-url']).split('/')[-1]),
-        'name': aicraft_name_cell.text,
+        'id': int(str(airplane_name_cell['data-url']).split('/')[-1]),
+        'name': airplane_name_cell.text,
         'model': sanitize_text(str(cells[0].text).split('/')[0]),
         'model_img_url': cells[0].find('img', attrs={'class': 'zoomAircraft'})['data-aircraftimg'],
-        'url': str(aicraft_name_cell['data-url']),
+        'url': str(airplane_name_cell['data-url']),
         'hub': sanitize_text(cells[1].text[:3]),
         'hub_flag_alt': cells[1].find('img')['alt'],
         'hub_flag_url': cells[1].find('img')['src'],

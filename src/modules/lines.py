@@ -6,7 +6,10 @@ from bs4.element import ResultSet
 from requests.cookies import RequestsCookieJar
 from typing import Tuple, Dict, List
 
-from .common import check_has_next_page, sanitize_text, save_dict_to_csv
+from .file import save_dict_to_csv
+from .logger import save_error_dump, log
+from .pagination import check_has_next_page
+from .strings import sanitize_text
 from .user_agent import get_base_headers
 
 
@@ -27,7 +30,7 @@ def fetch_all_lines(cookies: RequestsCookieJar) -> List:
         page += 1
 
     save_dict_to_csv(lines, os.environ['LINES_SUMMARY_FILEPATH'])
-    print(
+    log(
         "Finished fetching {} lines! (summary exported to {})".format(
             len(lines),
             os.environ['LINES_SUMMARY_FILEPATH']
@@ -53,11 +56,13 @@ def get_page_lines(cookies: RequestsCookieJar, page: int = 1) -> Tuple:
 
     amgold_lines_table = lines_bs.find('div', attrs={'id': 'displayPro'})
     if amgold_lines_table is None:
-        raise NotImplementedError("ToDo: Implement lines reading when not using an AM Gold account!")
+        log("Aborting lines reading as the AM Gold lines table was not found!", )
+        save_error_dump(dump=lines.text, tag='lines_amgold_table_not_found')
+        raise ReferenceError("Div with id displayPro was not found")
 
     lines_table = amgold_lines_table.find_all('table')[1]
     lines_rows = lines_table.find_all('tr')
-    print("Found a total of {} rows in page {}.".format(len(lines_rows), page))
+    log("Found a total of {} rows in page {}.".format(len(lines_rows), page))
     lines = [parse_line_row(row) for row in lines_rows]
     lines = [line for line in lines if not len(line) == 0]
 

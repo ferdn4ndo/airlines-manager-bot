@@ -7,7 +7,8 @@ from datetime import datetime
 from requests.cookies import RequestsCookieJar
 from typing import Dict
 
-from .common import save_dict_to_json
+from .file import save_dict_to_json
+from .logger import log, LogLevels, save_error_dump
 from .user_agent import get_base_headers
 
 
@@ -21,8 +22,7 @@ def spin_travel_cards_wheel_if_available(cookies: RequestsCookieJar):
         return
 
     spin_result = spin_travel_cards_wheel(cookies)
-    print("Travel Card Wheel spin Results:")
-    print(spin_result)
+    log("Travel Card Wheel spin Results: {}".format(json.dumps(spin_result)))
 
 
 def is_travel_cards_wheel_available(cookies: RequestsCookieJar) -> bool:
@@ -31,16 +31,21 @@ def is_travel_cards_wheel_available(cookies: RequestsCookieJar) -> bool:
     :param cookies:
     :return:
     """
-    lines = requests.get(
+    home_response = requests.get(
         'https://tycoon.airlines-manager.com/home',
         headers=get_base_headers(),
         cookies=cookies,
     )
-    lines_bs = BeautifulSoup(lines.text, 'html.parser')
+    home_bs = BeautifulSoup(home_response.text, 'html.parser')
 
-    has_play_wheel_banner = lines_bs.find('div', attrs={'id': 'playWheel'}) is not None
+    main_content_div = home_bs.find('div', attrs={'id': 'mainContent'})
+    if main_content_div is None:
+        log("Aborting workshop reading as the items rack div was not found!", LogLevels.LOG_LEVEL_ERROR)
+        save_error_dump(dump=home_response.text, tag='home_main_content_div_not_found')
+        raise ReferenceError("The home content div was not found")
 
-    print("Travel Cards Wheel available: {}".format("YES" if has_play_wheel_banner else "NO"))
+    has_play_wheel_banner = home_bs.find('div', attrs={'id': 'playWheel'}) is not None
+    log("Travel Cards Wheel available: {}".format('YES' if has_play_wheel_banner else 'NO'))
 
     return has_play_wheel_banner
 

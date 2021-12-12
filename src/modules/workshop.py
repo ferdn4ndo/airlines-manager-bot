@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from requests.cookies import RequestsCookieJar
 from typing import List
 
+from .logger import log, LogLevels, save_error_dump
 from .user_agent import get_base_headers
 
 
@@ -15,7 +16,7 @@ def get_free_workshop_items(cookies: RequestsCookieJar):
     """
     workshop_items = retrieve_all_workshop_items(cookies)
     free_items = filter_free_workshop_items(workshop_items)
-    print("Total Workshop free items: {}".format(len(free_items)))
+    log("Total Workshop free items: {}".format(len(free_items)))
 
     for item in free_items:
         retrieve_workshop_item(cookies, item)
@@ -38,7 +39,9 @@ def retrieve_all_workshop_items(cookies: RequestsCookieJar) -> List:
     items_rack = card_holder_bs.find('div', attrs={'class': 'rack'})
 
     if items_rack is None:
-        return []
+        log("Aborting workshop reading as the items rack div was not found!", LogLevels.LOG_LEVEL_ERROR)
+        save_error_dump(dump=card_holder_response.text, tag='items_rack_div_not_found')
+        raise ReferenceError("The workshop items div was not found")
 
     return list(items_rack.find_all('div', attrs={'class': 'object'}))
 
@@ -63,7 +66,7 @@ def retrieve_workshop_item(cookies: RequestsCookieJar, item: BeautifulSoup) -> b
     :return:
     """
     item_url = item.find('a')['href']
-    print('Getting free workshop item: ' + item_url)
+    log('Getting free workshop item: ' + item_url)
 
     free_card_holder_response = requests.post(
         'https://tycoon.airlines-manager.com' + item_url,
@@ -77,7 +80,7 @@ def retrieve_workshop_item(cookies: RequestsCookieJar, item: BeautifulSoup) -> b
     )
 
     item_retrieved_successfully = free_card_holder_response.status_code == 302
-    print("Retrieved item {} with {}".format(item_url, "SUCCESS" if item_retrieved_successfully is True else "FAILURE"))
+    log("Retrieved item {} with {}".format(item_url, 'SUCCESS' if item_retrieved_successfully is True else 'FAILURE'))
 
     # To resume the flow
     retrieve_all_workshop_items(cookies)

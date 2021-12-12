@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.cookies import RequestsCookieJar
 
+from .logger import log, LogLevels, save_error_dump
 from .user_agent import get_base_headers
 
 
@@ -19,15 +20,19 @@ def get_cookies() -> RequestsCookieJar:
     return read_cookies_file()
 
 
+def get_cookies_filepath() -> str:
+    """
+    Retrieve the path of the file to store the cookies
+    :return:
+    """
+    return os.environ['COOKIES_FILEPATH'] if 'COOKIES_FILEPATH' in os.environ else '/data/cookies.dat'
+
+
 def check_cookies_file_sanity() -> bool:
     """
     Determines if the stored cookies data is still valid on authorized requests.
     :return:
     """
-    if not os.path.isfile(os.environ['COOKIES_FILEPATH']):
-        print("Cookies file not present! Path: {}".format(os.environ['COOKIES_FILEPATH']))
-        return False
-
     cookies = read_cookies_file()
     session = requests.Session()
     session.cookies.update(cookies)
@@ -40,7 +45,7 @@ def check_cookies_file_sanity() -> bool:
     session.close()
 
     cookies_are_ok = home_response.status_code == 200
-    print("Current cookies status is {}".format("OK" if cookies_are_ok is True else "FAILING"))
+    log("Current cookies status is {}".format("OK" if cookies_are_ok is True else "FAILING"))
 
     return cookies_are_ok
 
@@ -56,8 +61,15 @@ def refresh_login_cookies(email: str, password: str) -> RequestsCookieJar:
     session = requests.Session()
     login_page_response = session.get('https://tycoon.airlines-manager.com/login', headers=get_base_headers())
     login_page_bs = BeautifulSoup(login_page_response.text, 'html.parser')
-    csrf_token = login_page_bs.find('input', attrs={'name': '_csrf_token'})['value']
-    print("CSRF Token: {}".format(csrf_token))
+
+    csrf_token_field = login_page_bs.find('input', attrs={'name': '_csrf_token'})
+    if csrf_token_field is None:
+        log("The CSRF token field was not found!", LogLevels.LOG_LEVEL_ERROR)
+        save_error_dump(dump=login_page_response.text, tag='csrf_token_field_not_found')
+        raise ReferenceError("The CSRF token field was not found")
+
+    csrf_token = csrf_token_field['value']
+    log("CSRF Token: {}".format(csrf_token))
 
     # Performs the login
     login_payload = {
@@ -83,7 +95,7 @@ def read_cookies_file() -> RequestsCookieJar:
     Reads the cookies data file into a RequestsCookieJar object to be used with authorized requests.
     :return:
     """
-    with open(os.environ['COOKIES_FILEPATH'], 'rb') as cookies_file:
+    with open(get_cookies_filepath(), 'rb') as cookies_file:
         cookies = pickle.load(cookies_file)
 
     return cookies
@@ -95,6 +107,6 @@ def save_cookies_file(cookies: RequestsCookieJar):
     :param cookies:
     :return:
     """
-    with open(os.environ['COOKIES_FILEPATH'], 'wb') as cookies_file:
+    with open(get_cookies_filepath(), 'wb') as cookies_file:
         pickle.dump(cookies, cookies_file)
-    print("Cookies saved!")
+    log("Cookies saved!")

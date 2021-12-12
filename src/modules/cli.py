@@ -42,7 +42,8 @@ def execute_infinite_loop():
             execute_tasks()
             wait_random_interval()
         except ReferenceError:
-            log("An error occurred when parsing a page, executing again...")
+            log("An error occurred when parsing a page, executing again in 10 seconds...")
+            time.sleep(10)
 
 
 def wait_random_interval():

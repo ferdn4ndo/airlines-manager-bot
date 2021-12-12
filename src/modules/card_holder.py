@@ -106,7 +106,7 @@ def parse_card_holder_bonus(bonus_bs: BeautifulSoup) -> Dict:
 
     return {
         'image_src': image_bs['src'] if image_bs is not None else '--Unknown--',
-        'bonus_text': bonus_text_bs.get_text if bonus_text_bs is not None else '--Unknown--',
+        'bonus_text': bonus_text_bs.get_text() if bonus_text_bs is not None else '--Unknown--',
     }
 
 

@@ -9,6 +9,7 @@ from typing import Dict
 
 from .file import save_dict_to_json
 from .logger import log, LogLevels, save_error_dump
+from .strings import sanitize_text
 from .user_agent import get_base_headers
 
 
@@ -62,9 +63,14 @@ def open_free_card_holder(cookies: RequestsCookieJar) -> Dict:
         'https://tycoon.airlines-manager.com/shop/cardholder/cards',
         headers=get_base_headers({
             'Accept': '*/*',
+            'Authority': 'tycoon.airlines-manager.com',
             'Referer': 'https://tycoon.airlines-manager.com/shop/cardholder',
             'X-Requested-With': 'XMLHttpRequest',
             'Accept-Language': 'en-US,en;q=0.9',
+            'sec-gpc': 1,
+            'sec-fetch-site': 'same-origin',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-dest': 'empty',
         }),
         cookies=cookies,
     )
@@ -106,7 +112,7 @@ def parse_card_holder_bonus(bonus_bs: BeautifulSoup) -> Dict:
 
     return {
         'image_src': image_bs['src'] if image_bs is not None else '--Unknown--',
-        'bonus_text': bonus_text_bs.get_text() if bonus_text_bs is not None else '--Unknown--',
+        'bonus_text': sanitize_text(bonus_text_bs.get_text()) if bonus_text_bs is not None else '--Unknown--',
     }
 
 

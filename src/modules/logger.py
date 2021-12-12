@@ -2,7 +2,7 @@ import os
 
 from datetime import datetime
 
-from .file import save_text_to_file
+from .file import save_text_to_file, FileMode
 
 
 class LogLevels:
@@ -27,9 +27,14 @@ def log(message: str, level: str = LogLevels.LOG_LEVEL_INFO, append_newline=True
     log_message = '[{timestamp} {level}] {message}'.format(
         timestamp=timestamp,
         level=level.upper(),
-        message=message
+        message=message,
     )
-    save_text_to_file((log_message + '\n') if append_newline else log_message, os.environ['LOG_FILEPATH'])
+    save_text_to_file(
+        input_text=(log_message + '\n') if append_newline else log_message,
+        output_filepath=os.environ['LOG_FILEPATH'],
+        file_mode=FileMode.FILE_MODE_APPEND,
+    )
+
     print(log_message)
 
 

@@ -4,17 +4,20 @@ import os
 
 from typing import Dict
 
+class FileMode:
+    """
+    Enum class to store the possible file opening modes
+    """
+    FILE_MODE_READ = 'r'
+    FILE_MODE_WRITE = 'w'
+    FILE_MODE_APPEND = 'a'
+    FILE_MODE_BINARY = 'b'
+    FILE_MODE_EXCLUSIVE = 'x'
+    FILE_MODE_TEXT = 't'
+    FILE_MODE_UPDATING = '+'
 
-FILE_MODE_READ = 'r'
-FILE_MODE_WRITE = 'w'
-FILE_MODE_APPEND = 'a'
-FILE_MODE_BINARY = 'b'
-FILE_MODE_EXCLUSIVE = 'x'
-FILE_MODE_TEXT = 't'
-FILE_MODE_UPDATING = '+'
 
-
-def save_dict_to_csv(input_dict, output_filepath, file_mode: str = FILE_MODE_WRITE):
+def save_dict_to_csv(input_dict, output_filepath, file_mode: str = FileMode.FILE_MODE_WRITE):
     """
     Saves a dictionary to a CSV file, using the keys of the first element in the dict to determine the CSV headers.
     :param input_dict:
@@ -36,7 +39,7 @@ def save_dict_to_csv(input_dict, output_filepath, file_mode: str = FILE_MODE_WRI
             csv_writer.writerow(row.values())
 
 
-def save_dict_to_json(input_dict: Dict, output_filepath: str, file_mode: str = FILE_MODE_WRITE):
+def save_dict_to_json(input_dict: Dict, output_filepath: str, file_mode: str = FileMode.FILE_MODE_WRITE):
     """
     Saves a dictionary to a JSON file
     :param input_dict:
@@ -51,7 +54,7 @@ def save_dict_to_json(input_dict: Dict, output_filepath: str, file_mode: str = F
         json.dump(input_dict, f, ensure_ascii=False, indent=4)
 
 
-def save_text_to_file(input_text: str, output_filepath: str, file_mode: str = FILE_MODE_WRITE):
+def save_text_to_file(input_text: str, output_filepath: str, file_mode: str = FileMode.FILE_MODE_WRITE):
     """
     Saves a raw text input to a file
     :param input_text:

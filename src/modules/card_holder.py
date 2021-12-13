@@ -67,7 +67,7 @@ def open_free_card_holder(cookies: RequestsCookieJar) -> Dict:
             'Referer': 'https://tycoon.airlines-manager.com/shop/cardholder',
             'X-Requested-With': 'XMLHttpRequest',
             'Accept-Language': 'en-US,en;q=0.9',
-            'sec-gpc': 1,
+            'sec-gpc': '1',
             'sec-fetch-site': 'same-origin',
             'sec-fetch-mode': 'cors',
             'sec-fetch-dest': 'empty',

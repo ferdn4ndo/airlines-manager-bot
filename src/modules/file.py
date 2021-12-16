@@ -1,8 +1,15 @@
 import csv
 import json
 import os
+import pickle
+from datetime import datetime
 
 from typing import Dict
+
+from requests.cookies import RequestsCookieJar
+
+from modules.logger import log
+
 
 class FileMode:
     """
@@ -67,3 +74,77 @@ def save_text_to_file(input_text: str, output_filepath: str, file_mode: str = Fi
 
     with open(output_filepath, file_mode) as f:
         f.write(input_text)
+
+
+def check_if_file_exists(filepath: str):
+    """
+    Check if a given filepath exists and raise a FileNotFoundError if not
+    :param filepath:
+    :return:
+    """
+    if not os.path.isfile(filepath):
+        log(f"Unable to locate file {filepath}!")
+        raise FileNotFoundError(f"Unable to locate file {filepath}!")
+
+
+def read_text_file(filepath: str, file_mode: str = FileMode.FILE_MODE_READ):
+    """
+    Reads a file to a string
+    :param filepath:
+    :param file_mode:
+    :return:
+    """
+    check_if_file_exists(filepath)
+
+    with open(filepath, file_mode) as f:
+        data = f.read()
+
+    return data
+
+
+def read_binary_file(filepath: str, file_mode: str = FileMode.FILE_MODE_READ + FileMode.FILE_MODE_BINARY):
+    """
+    Reads a file to a string
+    :param filepath:
+    :param file_mode:
+    :return:
+    """
+    check_if_file_exists(filepath)
+
+    with open(filepath, file_mode) as f:
+        data = pickle.load(f)
+
+    return data
+
+
+def read_cookies_file() -> RequestsCookieJar:
+    """
+    Reads the cookies data file into a RequestsCookieJar object to be used with authorized requests.
+    :return:
+    """
+    return read_binary_file(filepath=os.getenv('COOKIES_FILEPATH', '/data/cookies.dat'))
+
+
+def save_cookies_file(cookies: RequestsCookieJar):
+    """
+    Saves the cookies data (from a RequestsCookieJar object) to the file.
+    :param cookies:
+    :return:
+    """
+    cookies_filepath = os.getenv('COOKIES_FILEPATH', '/data/cookies.dat')
+    with open(cookies_filepath, 'wb') as cookies_file:
+        pickle.dump(cookies, cookies_file)
+
+
+def save_error_dump_file(dump: str, tag: str = 'dump'):
+    """
+    Saves an error dump to a file
+    :param dump:
+    :param tag:
+    :return:
+    """
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = '{}_{}.txt'.format(timestamp, tag)
+    filepath = os.path.join(os.getenv('ERROR_DUMPS_FOLDER', '/data/error_dumps'), filename)
+    save_text_to_file(dump, filepath)
+    log("Saved error dump to {}".format(filepath))

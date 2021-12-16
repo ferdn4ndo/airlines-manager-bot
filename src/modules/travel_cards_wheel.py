@@ -1,47 +1,44 @@
 import json
 import os
-import requests
-
-from bs4 import BeautifulSoup
 from datetime import datetime
-from requests.cookies import RequestsCookieJar
 from typing import Dict
 
-from .file import save_dict_to_json
-from .logger import log, LogLevels, save_error_dump
-from .user_agent import get_base_headers
+from bs4 import BeautifulSoup
+
+from modules.file import save_dict_to_json, save_error_dump_file
+from modules.logger import log, LogLevels
+from modules.session_manager import SessionManager
 
 
-def spin_travel_cards_wheel_if_available(cookies: RequestsCookieJar):
+def spin_travel_cards_wheel_if_available(session_manager: SessionManager):
     """
     Checks if the Travel Cards wheel is available, and spin it if so
-    :param cookies:
+    :param session_manager:
     :return:
     """
-    if not is_travel_cards_wheel_available(cookies):
+    if not is_travel_cards_wheel_available(session_manager=session_manager):
         return
 
-    spin_result = spin_travel_cards_wheel(cookies)
+    spin_result = spin_travel_cards_wheel(session_manager=session_manager)
     log("Travel Card Wheel spin Results: {}".format(json.dumps(spin_result)))
 
 
-def is_travel_cards_wheel_available(cookies: RequestsCookieJar) -> bool:
+def is_travel_cards_wheel_available(session_manager: SessionManager) -> bool:
     """
     Determines if the Travel Cards Wheel is available to spin
-    :param cookies:
+    :param session_manager:
     :return:
     """
-    home_response = requests.get(
-        'https://tycoon.airlines-manager.com/home',
-        headers=get_base_headers(),
-        cookies=cookies,
+    home_response = session_manager.request(
+        url='http://tycoon.airlines-manager.com/home',
+        method=SessionManager.Methods.GET,
     )
     home_bs = BeautifulSoup(home_response.text, 'html.parser')
 
     main_content_div = home_bs.find('div', attrs={'id': 'mainContent'})
     if main_content_div is None:
         log("Aborting workshop reading as the items rack div was not found!", LogLevels.LOG_LEVEL_ERROR)
-        save_error_dump(dump=home_response.text, tag='home_main_content_div_not_found')
+        save_error_dump_file(dump=home_response.text, tag='home_main_content_div_not_found')
         raise ReferenceError("The home content div was not found")
 
     has_play_wheel_banner = home_bs.find('div', attrs={'id': 'playWheel'}) is not None
@@ -50,20 +47,20 @@ def is_travel_cards_wheel_available(cookies: RequestsCookieJar) -> bool:
     return has_play_wheel_banner
 
 
-def spin_travel_cards_wheel(cookies: RequestsCookieJar) -> Dict:
+def spin_travel_cards_wheel(session_manager: SessionManager) -> Dict:
     """
     Spin the Travel Cards Wheel, save and return the results (must check if available first!)
-    :param cookies:
+    :param session_manager:
     :return:
     """
-    wheel_spin_result = requests.get(
-        'https://tycoon.airlines-manager.com/home/wheeltcgame/play',
-        headers=get_base_headers({
+    wheel_spin_result = session_manager.request(
+        url='http://tycoon.airlines-manager.com/home/wheeltcgame/play',
+        method=SessionManager.Methods.GET,
+        extra_headers={
             'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Referer': 'https://tycoon.airlines-manager.com/home/wheeltcgame',
+            'Referer': 'http://tycoon.airlines-manager.com/home/wheeltcgame',
             'X-Requested-With': 'XMLHttpRequest',
-        }),
-        cookies=cookies,
+        },
     )
 
     original_json_data = json.loads(wheel_spin_result.text)

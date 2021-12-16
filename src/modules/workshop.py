@@ -1,46 +1,46 @@
-import requests
-
 from bs4 import BeautifulSoup
-from requests.cookies import RequestsCookieJar
 from typing import List
 
-from .logger import log, LogLevels, save_error_dump
+from .file import save_error_dump_file
+from .logger import log, LogLevels
+from .session_manager import SessionManager
+from .strings import return_only_numbers
 from .user_agent import get_base_headers
 
 
-def get_free_workshop_items(cookies: RequestsCookieJar):
+def get_free_workshop_items(session_manager: SessionManager):
     """
     Checks if there are free workshop items to be purchased, and gets them if so
-    :param cookies:
+    :param session_manager:
     :return:
     """
-    workshop_items = retrieve_all_workshop_items(cookies)
+    workshop_items = retrieve_all_workshop_items(session_manager=session_manager)
     free_items = filter_free_workshop_items(workshop_items)
-    log("Total Workshop free items: {}".format(len(free_items)))
+    log(f"Total Workshop free items: {len(free_items)}")
 
     for item in free_items:
-        retrieve_workshop_item(cookies, item)
+        retrieve_workshop_item(session_manager=session_manager, workshop_item=item)
 
 
-def retrieve_all_workshop_items(cookies: RequestsCookieJar) -> List:
+def retrieve_all_workshop_items(session_manager: SessionManager) -> List:
     """
     Retrieves all the workshop items
-    :param cookies:
+    :param session_manager:
     :return:
     """
-    card_holder_response = requests.get(
-        'https://tycoon.airlines-manager.com/shop/workshop',
-        headers=get_base_headers({
-            'Referer': 'https://tycoon.airlines-manager.com/home',
+    card_holder_response = session_manager.request(
+        url='http://tycoon.airlines-manager.com/shop/workshop',
+        method=SessionManager.Methods.GET,
+        extra_headers=get_base_headers({
+            'Referer': 'http://tycoon.airlines-manager.com/home',
         }),
-        cookies=cookies,
     )
     card_holder_bs = BeautifulSoup(card_holder_response.text, 'html.parser')
     items_rack = card_holder_bs.find('div', attrs={'class': 'rack'})
 
     if items_rack is None:
         log("Aborting workshop reading as the items rack div was not found!", LogLevels.LOG_LEVEL_ERROR)
-        save_error_dump(dump=card_holder_response.text, tag='items_rack_div_not_found')
+        save_error_dump_file(dump=card_holder_response.text, tag='items_rack_div_not_found')
         raise ReferenceError("The workshop items div was not found")
 
     return list(items_rack.find_all('div', attrs={'class': 'object'}))
@@ -54,28 +54,39 @@ def filter_free_workshop_items(workshop_items: List) -> List:
     """
     return [
         item for item in workshop_items
-        if 'Gratuito' in item.text
+        if is_free_item(item)
     ]
 
 
-def retrieve_workshop_item(cookies: RequestsCookieJar, item: BeautifulSoup) -> bool:
+def is_free_item(workshop_item: BeautifulSoup) -> bool:
     """
-    Purchase the free workshop item, save and return the results (must check if available first!)
-    :param item:
-    :param cookies:
+    Determines if a given workshop item is free
+    :param workshop_item:
     :return:
     """
-    item_url = item.find('a')['href']
-    log('Getting free workshop item: ' + item_url)
+    link = workshop_item.find('a', attrs={'class': 'purchaseButton useAjax'})
+    if link is None:
+        return False
 
-    free_card_holder_response = requests.post(
-        'https://tycoon.airlines-manager.com' + item_url,
-        headers=get_base_headers({
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            'Referer': 'https://tycoon.airlines-manager.com/shop/workshop',
-            'Accept-Language': 'en-US,en;q=0.9',
-        }),
-        cookies=cookies,
+    return return_only_numbers(link.text) is None
+
+
+def retrieve_workshop_item(session_manager: SessionManager, workshop_item: BeautifulSoup) -> bool:
+    """
+    Purchase the free workshop item, save and return the results (must check if available first!)
+    :param session_manager:
+    :param workshop_item:
+    :return:
+    """
+    item_url = workshop_item.find('a')['href']
+    log(f'Getting free workshop item: {item_url}')
+
+    free_card_holder_response = session_manager.request(
+        url='http://tycoon.airlines-manager.com' + item_url,
+        method=SessionManager.Methods.POST,
+        extra_headers={
+            'Referer': 'http://tycoon.airlines-manager.com/shop/workshop',
+        },
         allow_redirects=False,
     )
 
@@ -83,6 +94,6 @@ def retrieve_workshop_item(cookies: RequestsCookieJar, item: BeautifulSoup) -> b
     log("Retrieved item {} with {}".format(item_url, 'SUCCESS' if item_retrieved_successfully is True else 'FAILURE'))
 
     # To resume the flow
-    retrieve_all_workshop_items(cookies)
+    retrieve_all_workshop_items(session_manager=session_manager)
 
     return item_retrieved_successfully

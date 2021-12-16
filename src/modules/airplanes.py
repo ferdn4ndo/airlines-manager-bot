@@ -1,23 +1,21 @@
 import os
-import requests
 
 from bs4 import BeautifulSoup
 from bs4.element import ResultSet
-from requests.cookies import RequestsCookieJar
 from typing import Tuple, Dict, List
 
-from .file import save_dict_to_csv
-from .logger import log, save_error_dump, LogLevels
-from .pagination import check_has_next_page
-from .strings import sanitize_text
-from .user_agent import get_base_headers
+from modules.file import save_dict_to_csv, save_error_dump_file
+from modules.logger import log, LogLevels
+from modules.pagination import check_has_next_page
+from modules.session_manager import SessionManager
+from modules.strings import sanitize_text
 
 
-def fetch_all_airplanes(cookies: RequestsCookieJar) -> List:
+def fetch_all_airplanes(session_manager: SessionManager) -> List:
     """
     Retrieves a list with all the airplanes registered in the account (and their summarized data), saving the output
     to a CSV file.
-    :param cookies:
+    :param session_manager:
     :return:
     """
     has_next = True
@@ -25,40 +23,39 @@ def fetch_all_airplanes(cookies: RequestsCookieJar) -> List:
     airplanes = []
 
     while has_next:
-        page_airplanes, has_next = get_page_airplanes(cookies, page)
+        page_airplanes, has_next = get_page_airplanes(session_manager=session_manager, page=page)
         airplanes.extend(page_airplanes)
         page += 1
 
-    save_dict_to_csv(airplanes, os.environ['AIRPLANES_SUMMARY_FILEPATH'])
-    log(
-        "Finished fetching {} airplanes! (summary exported to {})".format(
-            len(airplanes),
-            os.environ['AIRPLANES_SUMMARY_FILEPATH']
-        )
-    )
+    airplanes_summary_filepath = os.getenv('AIRPLANES_SUMMARY_FILEPATH', '/data/airplanes_summary.csv')
+    save_dict_to_csv(airplanes, airplanes_summary_filepath)
+    log(f"Finished fetching {len(airplanes)} airplanes! (summary exported to {airplanes_summary_filepath})")
 
     return airplanes
 
 
-def get_page_airplanes(cookies: RequestsCookieJar, page: int = 1) -> Tuple:
+def get_page_airplanes(session_manager: SessionManager, page: int = 1) -> Tuple:
     """
     Retrieves a tuple of 2 items, containing the List of the airplanes in that page and if there's a next page
     available.
-    :param cookies:
+    :param session_manager:
     :param page:
     :return:
     """
-    airplanes = requests.get(
-        'https://tycoon.airlines-manager.com/aircraft?page=' + str(page),
-        headers=get_base_headers(),
-        cookies=cookies,
+    referer_endpoint = 'home/' if page <= 1 else f'aircraft?page={page - 1}'
+    airplanes = session_manager.request(
+        url='http://tycoon.airlines-manager.com/aircraft?page=' + str(page),
+        method=SessionManager.Methods.GET,
+        extra_headers={
+            'Referer': f'http://tycoon.airlines-manager.com/{referer_endpoint}',
+        },
     )
     airplanes_bs = BeautifulSoup(airplanes.text, 'html.parser')
 
     airplanes_table = airplanes_bs.find('table', attrs={'class': 'aircraftListViewTable'})
     if airplanes_table is None:
         log("Aborting airplanes reading as the airplanes table was not found!", LogLevels.LOG_LEVEL_ERROR)
-        save_error_dump(dump=airplanes.text, tag='airplanes_table_not_found')
+        save_error_dump_file(dump=airplanes.text, tag='airplanes_table_not_found')
         raise ReferenceError("Table with class aircraftListViewTable was not found")
 
     airplanes_rows = airplanes_table.find_all('tr')

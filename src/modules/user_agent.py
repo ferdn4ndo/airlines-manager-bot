@@ -2,6 +2,7 @@ import random
 
 from typing import Dict
 
+from modules.logger import log, LogLevels
 
 COMMON_USER_AGENTS = [
     'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; FSL 7.0.6.01001)',
@@ -32,6 +33,8 @@ def get_random_user_agent() -> str:
     Retrieves a random valid user-agent string to be used on the requests.
     :return:
     """
+    log("Entering get_random_user_agent method", LogLevels.LOG_LEVEL_DEBUG)
+
     return random.choice(COMMON_USER_AGENTS)
 
 
@@ -40,6 +43,7 @@ def get_base_headers(extra_headers: Dict = None) -> Dict:
     Retrieves a base dict of headers with a random valid user agent.
     :return:
     """
+    log("Entering get_base_headers method", LogLevels.LOG_LEVEL_DEBUG)
     user_agent_header = {
         'User-Agent': get_random_user_agent(),
     }

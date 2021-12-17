@@ -13,6 +13,7 @@ def update_line_audit_data(line: Line, session_manager: SessionManager):
     :param session_manager:
     :return:
     """
+    log("Entering update_line_audit_data method", LogLevels.LOG_LEVEL_DEBUG)
     update_audit_response = session_manager.request(
         url=f'http://tycoon.airlines-manager.com/marketing/internalaudit/line/{line.id}?fromPricing=1',
         method=SessionManager.Methods.GET,
@@ -28,7 +29,7 @@ def update_line_audit_data(line: Line, session_manager: SessionManager):
         raise ReferenceError(f"Received status code {update_audit_response.status_code} when expecting 302!")
 
     log(
-        'Audit data updated for line {} for a cost of $ {}! ({} bytes received)'.format(
+        "Audit data updated for line {} for a cost of $ {}! ({} bytes received)".format(
             line.name,
             line.internal_audit_cost,
             len(update_audit_response.text),
@@ -43,6 +44,7 @@ def update_line_cost(line: Line, session_manager: SessionManager):
     :param session_manager:
     :return:
     """
+    log("Entering update_line_cost method", LogLevels.LOG_LEVEL_DEBUG)
     line_pricing_response = session_manager.request(
         url=f'http://tycoon.airlines-manager.com/marketing/pricing/{line.id}',
         method=SessionManager.Methods.GET,
@@ -65,7 +67,7 @@ def update_line_cost(line: Line, session_manager: SessionManager):
         raise ReferenceError("Input with id line__token was not found")
 
     line_token = line_token_input['value']
-    log(f"Line price update CSRF token: {line_token}")
+    log(f"Line price update CSRF token: {line_token}", LogLevels.LOG_LEVEL_NOTICE)
 
     price_update_payload = {
         'line[priceEco]': line.ideal_cost.economic,
@@ -83,5 +85,7 @@ def update_line_cost(line: Line, session_manager: SessionManager):
             'Referer': f'http://tycoon.airlines-manager.com/marketing/pricing/{line.id}/',
         },
     )
-    log(f'Line {line.name} had the prices updated! ({len(line_pricing_update_response.text)} bytes received)')
-
+    log(
+        f"Line {line.name} had the prices updated! ({len(line_pricing_update_response.text)} bytes received)",
+        LogLevels.LOG_LEVEL_NOTICE
+    )

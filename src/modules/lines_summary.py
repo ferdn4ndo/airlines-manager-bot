@@ -5,7 +5,7 @@ from bs4.element import ResultSet
 from typing import List, Dict, Tuple
 
 from modules.file import save_dict_to_csv, save_error_dump_file
-from modules.logger import log
+from modules.logger import log, LogLevels
 from modules.pagination import check_has_next_page
 from modules.session_manager import SessionManager
 from modules.strings import sanitize_text
@@ -17,6 +17,7 @@ def fetch_lines_summary(session_manager: SessionManager) -> List:
     :param session_manager:
     :return:
     """
+    log("Entering fetch_lines_summary method", LogLevels.LOG_LEVEL_DEBUG)
     has_next = True
     page = 1
     lines_summary = []
@@ -28,7 +29,7 @@ def fetch_lines_summary(session_manager: SessionManager) -> List:
 
     lines_summary_filepath = os.getenv('LINES_SUMMARY_FILEPATH', '/data/lines_summary.csv')
     save_dict_to_csv(lines_summary, lines_summary_filepath)
-    log(f"Finished indexing {len(lines_summary)} lines! (summary exported to {lines_summary_filepath})")
+    log(f"Finished listing {len(lines_summary)} lines! (summary exported to {lines_summary_filepath})")
 
     return lines_summary
 
@@ -40,6 +41,7 @@ def fetch_lines_summary_from_page(session_manager: SessionManager, page: int = 1
     :param page:
     :return:
     """
+    log("Entering fetch_lines_summary_from_page method", LogLevels.LOG_LEVEL_DEBUG)
     lines = session_manager.request(
         url='http://tycoon.airlines-manager.com/network/?page=' + str(page),
         method=SessionManager.Methods.GET,
@@ -48,13 +50,13 @@ def fetch_lines_summary_from_page(session_manager: SessionManager, page: int = 1
 
     amgold_lines_table = lines_bs.find('div', attrs={'id': 'displayPro'})
     if amgold_lines_table is None:
-        log("Aborting lines reading as the AM Gold lines table was not found!", )
+        log("Aborting lines reading as the AM Gold lines table was not found!", LogLevels.LOG_LEVEL_ERROR)
         save_error_dump_file(dump=lines.text, tag='lines_amgold_table_not_found')
         raise ReferenceError("Div with id displayPro was not found")
 
     lines_table = amgold_lines_table.find_all('table')[1]
     lines_rows = lines_table.find_all('tr')
-    log("Found a total of {} rows in page {}.".format(len(lines_rows), page))
+    log("Found a total of {} rows in page {}.".format(len(lines_rows), page), LogLevels.LOG_LEVEL_NOTICE)
     lines = [parse_line_summary_row(row) for row in lines_rows]
     lines = [line for line in lines if not len(line) == 0]
 
@@ -67,6 +69,7 @@ def parse_line_summary_row(row: ResultSet) -> Dict:
     :param row:
     :return:
     """
+    log("Entering parse_line_summary_row method", LogLevels.LOG_LEVEL_DEBUG)
     if len(row.find_all('th')) > 0:
         return {}
 

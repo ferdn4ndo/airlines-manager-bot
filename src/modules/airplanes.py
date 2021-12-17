@@ -11,13 +11,14 @@ from modules.session_manager import SessionManager
 from modules.strings import sanitize_text
 
 
-def fetch_all_airplanes(session_manager: SessionManager) -> List:
+def fetch_all_airplanes_list(session_manager: SessionManager) -> List:
     """
     Retrieves a list with all the airplanes registered in the account (and their summarized data), saving the output
     to a CSV file.
     :param session_manager:
     :return:
     """
+    log("Entering fetch_all_airplanes method", LogLevels.LOG_LEVEL_DEBUG)
     has_next = True
     page = 1
     airplanes = []
@@ -29,7 +30,7 @@ def fetch_all_airplanes(session_manager: SessionManager) -> List:
 
     airplanes_summary_filepath = os.getenv('AIRPLANES_SUMMARY_FILEPATH', '/data/airplanes_summary.csv')
     save_dict_to_csv(airplanes, airplanes_summary_filepath)
-    log(f"Finished fetching {len(airplanes)} airplanes! (summary exported to {airplanes_summary_filepath})")
+    log(f"Finished listing {len(airplanes)} airplanes! (summary exported to {airplanes_summary_filepath})")
 
     return airplanes
 
@@ -42,6 +43,7 @@ def get_page_airplanes(session_manager: SessionManager, page: int = 1) -> Tuple:
     :param page:
     :return:
     """
+    log("Entering get_page_airplanes method", LogLevels.LOG_LEVEL_DEBUG)
     referer_endpoint = 'home/' if page <= 1 else f'aircraft?page={page - 1}'
     airplanes = session_manager.request(
         url='http://tycoon.airlines-manager.com/aircraft?page=' + str(page),
@@ -59,7 +61,7 @@ def get_page_airplanes(session_manager: SessionManager, page: int = 1) -> Tuple:
         raise ReferenceError("Table with class aircraftListViewTable was not found")
 
     airplanes_rows = airplanes_table.find_all('tr')
-    log("Found a total of {} rows in page {}.".format(len(airplanes_rows), page))
+    log("Found a total of {} rows in page {}.".format(len(airplanes_rows), page), LogLevels.LOG_LEVEL_NOTICE)
     airplanes = [parse_airplane_row(row) for row in airplanes_rows]
     airplanes = [airplane for airplane in airplanes if not len(airplane) == 0]
 
@@ -72,6 +74,7 @@ def parse_airplane_row(row: ResultSet) -> Dict:
     :param row:
     :return:
     """
+    log("Entering parse_airplane_row method", LogLevels.LOG_LEVEL_DEBUG)
     if len(row.find_all('th')) > 0:
         return {}
 

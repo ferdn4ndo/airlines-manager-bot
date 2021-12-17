@@ -5,9 +5,9 @@ import time
 
 from typing import List
 
-from modules.airplanes import fetch_all_airplanes
+from modules.airplanes import fetch_all_airplanes_list
 from modules.card_holder import get_free_card_holder_if_available
-from modules.lines import fetch_all_lines
+from modules.lines import fetch_all_lines_list
 from modules.lines_data import update_all_lines_data
 from modules.logger import log, LogLevels
 from modules.session_manager import SessionManager
@@ -22,6 +22,7 @@ def execute_from_arguments(arguments: List):
     :param arguments:
     :return:
     """
+    log(f"Executing from arguments: [ {' , '.join(arguments)} ]", LogLevels.LOG_LEVEL_DEBUG)
     if len(arguments) == 0:
         execute_infinite_loop()
         return
@@ -45,6 +46,7 @@ def execute_infinite_loop():
     Execute the main tasks in an eternal loop, waiting a random interval between each of the executions
     :return:
     """
+    log("Entering execute_infinite_loop method", LogLevels.LOG_LEVEL_DEBUG)
     while True:
         try:
             execute_tasks()
@@ -79,10 +81,10 @@ def execute_tasks():
     get_free_workshop_items(session_manager=session_manager)
 
     # Fetch the airplanes
-    fetch_all_airplanes(session_manager=session_manager)
+    fetch_all_airplanes_list(session_manager=session_manager)
 
     # Fetch the lines
-    fetch_all_lines(session_manager=session_manager)
+    fetch_all_lines_list(session_manager=session_manager)
 
     total_interval = round(time.time() - start_time)
     total_timedelta = datetime.timedelta(seconds=total_interval)

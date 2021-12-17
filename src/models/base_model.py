@@ -1,5 +1,7 @@
 from typing import Dict
 
+from modules.logger import log, LogLevels
+
 
 class BaseModel:
     """
@@ -12,6 +14,7 @@ class BaseModel:
         Base model constructor
         :param kwargs:
         """
+        log("Instantiating BaseModel class", LogLevels.LOG_LEVEL_DEBUG)
         self.unserialize(kwargs)
 
     def serialize(self) -> Dict:
@@ -19,6 +22,8 @@ class BaseModel:
         Writes the model as a dict
         :return:
         """
+        log("Entering BaseModel.serialize method", LogLevels.LOG_LEVEL_DEBUG)
+
         serialized_dict = {}
 
         for field in self.serializable_fields:
@@ -32,6 +37,8 @@ class BaseModel:
         :param data_dict:
         :return:
         """
+        log("Entering BaseModel.unserialize method", LogLevels.LOG_LEVEL_DEBUG)
+
         if not all([hasattr(self, field) for field in data_dict.keys()]):
             raise ValueError('Not all fields are valid!')
 

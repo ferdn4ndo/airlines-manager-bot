@@ -1,5 +1,6 @@
 import json
 import os
+
 from typing import Dict
 
 from models.base_model import BaseModel
@@ -21,6 +22,7 @@ class Airport(BaseModel):
         Airport class constructor
         :param kwargs:
         """
+        log("Instantiating Airport class", LogLevels.LOG_LEVEL_DEBUG)
         super(Airport, self).__init__(**kwargs)
 
         if 'id' in kwargs:
@@ -31,6 +33,8 @@ class Airport(BaseModel):
         Overrides the original string conversion method to add more information
         :return:
         """
+        log("Entering Airport.__str__ method", LogLevels.LOG_LEVEL_DEBUG)
+
         return '{} - {}'.format(self.abbrev, self.name)
 
     def load_from_file(self):
@@ -38,6 +42,8 @@ class Airport(BaseModel):
         Load the resource from a file stored locally
         :return:
         """
+        log("Entering Airport.load_from_file method", LogLevels.LOG_LEVEL_DEBUG),
+
         if self.abbrev is None:
             raise ValueError("Cannot load airport from file without abbrev!")
 
@@ -59,12 +65,14 @@ class Airport(BaseModel):
         Persist the resource to a file stored locally
         :return:
         """
+        log("Entering Airport.persist_to_file method", LogLevels.LOG_LEVEL_DEBUG)
+
         if self.abbrev is None:
             raise ValueError("Cannot persist airport to file without abbrev!")
 
         filepath = os.path.join(os.environ['AIRPORTS_OBJECTS_FOLDER'], f'{self.abbrev}.json')
         save_dict_to_json(input_dict=self.serialize(), output_filepath=filepath)
-        log(f"Persisted airport {self.abbrev} to file {filepath}!")
+        log(f"Persisted airport {self.abbrev} to file {filepath}!", LogLevels.LOG_LEVEL_DEBUG)
 
 
 def create_airport_from_dict(data_dict: Dict) -> Airport:
@@ -73,6 +81,8 @@ def create_airport_from_dict(data_dict: Dict) -> Airport:
     :param data_dict:
     :return:
     """
+    log("Entering create_airport_from_dict method", LogLevels.LOG_LEVEL_DEBUG)
+
     airport = Airport()
     airport.unserialize(data_dict)
 

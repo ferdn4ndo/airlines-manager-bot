@@ -20,6 +20,7 @@ def update_all_lines_data(session_manager: SessionManager):
     :param session_manager:
     :return:
     """
+    log("Entering update_all_lines_data method", LogLevels.LOG_LEVEL_DEBUG)
     lines = fetch_lines_summary(session_manager=session_manager)
     for line_dict in lines:
         line_id = int(line_dict['id'])
@@ -34,24 +35,34 @@ def update_line_data(line: Line, session_manager: SessionManager):
     :param session_manager:
     :return:
     """
-    log('Updating basic data for line ID {}'.format(line.id))
+    log("Entering update_line_data method", LogLevels.LOG_LEVEL_DEBUG)
+    log(f"Updating data for line ID {line.id}")
+
+    log(f"Updating basic data for line ID {line.id}", LogLevels.LOG_LEVEL_DEBUG)
     update_basic_data(line=line, session_manager=session_manager)
 
-    log('Updating marketing data for line ID {}'.format(line.id))
+    log(f"Updating marketing data for line ID {line.id}", LogLevels.LOG_LEVEL_DEBUG)
     update_marketing_data(line=line, session_manager=session_manager)
 
     if line.reliability_level > 50:
-        log(f'Last audit for line ID {line.id} is not trustable ({line.reliability_level} > 50), refreshing...')
+        log(
+            "Last audit for line {} (ID {}) is not trustable ({} > 50), refreshing...".format(
+                line.name,
+                line.id,
+                line.reliability_level
+            )
+        )
         update_line_audit_data(line=line, session_manager=session_manager)
+        update_marketing_data(line=line, session_manager=session_manager)
 
     if line.can_update_prices and line.ideal_cost != line.current_cost:
-        log(f'Line {line.name} has a price difference between ideal and actual and can be updated, updating...')
+        log(f"Line {line.name} has a price difference between ideal and actual and can be updated, updating...")
         update_line_cost(line=line, session_manager=session_manager)
         update_marketing_data(line=line, session_manager=session_manager)
 
     line.last_updated_at = datetime.datetime.now()
     line.persist_to_file()
-    log(f'Finished fetching data for line {line.name} (ID: {line.id})!')
+    log(f"Finished fetching data for line {line.name} (ID: {line.id})!")
 
 
 def update_basic_data(line: Line, session_manager: SessionManager):
@@ -61,6 +72,7 @@ def update_basic_data(line: Line, session_manager: SessionManager):
     :param session_manager:
     :return:
     """
+    log("Entering update_basic_data method", LogLevels.LOG_LEVEL_DEBUG)
     line_details_response = session_manager.request(
         url=f'http://tycoon.airlines-manager.com/network/showline/{line.id}',
         method=SessionManager.Methods.GET,
@@ -111,6 +123,7 @@ def update_marketing_data(line: Line, session_manager: SessionManager):
     :param session_manager:
     :return:
     """
+    log("Entering update_marketing_data method", LogLevels.LOG_LEVEL_DEBUG)
     line_pricing_response = session_manager.request(
         url=f'http://tycoon.airlines-manager.com/marketing/pricing/{line.id}',
         method=SessionManager.Methods.GET,

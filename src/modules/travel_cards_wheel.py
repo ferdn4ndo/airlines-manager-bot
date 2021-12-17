@@ -1,9 +1,9 @@
 import json
 import os
-from datetime import datetime
-from typing import Dict
 
 from bs4 import BeautifulSoup
+from datetime import datetime
+from typing import Dict
 
 from modules.file import save_dict_to_json, save_error_dump_file
 from modules.logger import log, LogLevels
@@ -16,6 +16,7 @@ def spin_travel_cards_wheel_if_available(session_manager: SessionManager):
     :param session_manager:
     :return:
     """
+    log("Entering spin_travel_cards_wheel_if_available method", LogLevels.LOG_LEVEL_DEBUG)
     if not is_travel_cards_wheel_available(session_manager=session_manager):
         return
 
@@ -29,6 +30,7 @@ def is_travel_cards_wheel_available(session_manager: SessionManager) -> bool:
     :param session_manager:
     :return:
     """
+    log("Entering is_travel_cards_wheel_available method", LogLevels.LOG_LEVEL_DEBUG)
     home_response = session_manager.request(
         url='http://tycoon.airlines-manager.com/home',
         method=SessionManager.Methods.GET,
@@ -53,6 +55,7 @@ def spin_travel_cards_wheel(session_manager: SessionManager) -> Dict:
     :param session_manager:
     :return:
     """
+    log("Entering spin_travel_cards_wheel method", LogLevels.LOG_LEVEL_DEBUG)
     wheel_spin_result = session_manager.request(
         url='http://tycoon.airlines-manager.com/home/wheeltcgame/play',
         method=SessionManager.Methods.GET,
@@ -85,6 +88,7 @@ def save_travel_cards_results(parsed_results: Dict):
     :param parsed_results:
     :return:
     """
+    log("Entering save_travel_cards_results method", LogLevels.LOG_LEVEL_DEBUG)
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     filename = 'travel_cards_wheel_results__{}.json'.format(timestamp)
     filepath = os.path.join(os.environ['TRAVEL_CARDS_RESULTS_FOLDER'], filename)

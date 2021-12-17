@@ -1,8 +1,8 @@
 import os
-from typing import Dict
-
 import requests
+
 from bs4 import BeautifulSoup
+from typing import Dict
 
 from modules.file import save_cookies_file, read_cookies_file, save_error_dump_file
 from modules.logger import log, LogLevels
@@ -33,12 +33,14 @@ class SessionManager:
         Retrieve the session object to use on the requests (will create and authenticate one if not present)
         :return:
         """
+        log("Entering get_session method", LogLevels.LOG_LEVEL_DEBUG)
+
         if self._session is not None:
             return self._session
 
         self._session = requests.Session()
 
-        log("A new session was created, checking cookies")
+        log("A new session was created, checking cookies", LogLevels.LOG_LEVEL_NOTICE)
         cookies_are_ok = self.check_cookies_file_sanity()
         if not cookies_are_ok:
             email = os.environ['AM_USER_EMAIL']
@@ -53,6 +55,8 @@ class SessionManager:
         Retrieve the user-agent to use on the requests (will select a random one if none is set)
         :return:
         """
+        log("Entering get_user_agent method", LogLevels.LOG_LEVEL_DEBUG)
+
         if self._user_agent is not None:
             return self._user_agent
 
@@ -66,6 +70,7 @@ class SessionManager:
         :param extra_headers:
         :return:
         """
+        log("Entering get_headers method", LogLevels.LOG_LEVEL_DEBUG)
         default_headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'Accept-Encoding': 'gzip, deflate',
@@ -97,10 +102,11 @@ class SessionManager:
         :param allow_redirects:
         :return:
         """
+        log("Entering request method", LogLevels.LOG_LEVEL_DEBUG)
         session = self.get_session()
 
         if not hasattr(session, method):
-            log(f"Invalid method '{method}' to request URL {url}!")
+            log(f"Invalid method '{method}' to request URL {url}!", LogLevels.LOG_LEVEL_ERROR)
             raise ValueError(f"Invalid method {method}")
 
         headers = self.get_headers(extra_headers)
@@ -123,6 +129,8 @@ class SessionManager:
         Determines if the stored cookies data is still valid on authorized requests.
         :return:
         """
+        log("Entering check_cookies_file_sanity method", LogLevels.LOG_LEVEL_DEBUG)
+
         cookies = read_cookies_file()
         self._session.cookies.update(cookies)
 
@@ -145,6 +153,8 @@ class SessionManager:
         :param password:
         :return:
         """
+        log("Entering refresh_login_cookies method", LogLevels.LOG_LEVEL_DEBUG)
+
         # Gets the CSRF token
         login_page_response = self._session.get(
             url='http://tycoon.airlines-manager.com/login',
@@ -159,7 +169,7 @@ class SessionManager:
             raise ReferenceError("The CSRF token field was not found")
 
         csrf_token = csrf_token_field['value']
-        log("CSRF Token: {}".format(csrf_token))
+        log("CSRF Token: {}".format(csrf_token), LogLevels.LOG_LEVEL_NOTICE)
 
         # Performs the login
         login_payload = {

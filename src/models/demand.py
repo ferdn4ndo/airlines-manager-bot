@@ -1,6 +1,7 @@
 from typing import Dict
 
 from models.categorized_value import CategorizedValue
+from modules.logger import log, LogLevels
 
 
 class Demand(CategorizedValue):
@@ -12,6 +13,8 @@ class Demand(CategorizedValue):
         Overrides the original string conversion method to add more information
         :return:
         """
+        log("Entering Demand.__str__ method", LogLevels.LOG_LEVEL_DEBUG)
+
         return '{} + {} + {} Pax ({} total) | {} T'.format(
             self.economic,
             self.executive,
@@ -25,6 +28,8 @@ class Demand(CategorizedValue):
         Helper function to retrieve the total amount of passengers (summing economic, executive and first class pax)
         :return:
         """
+        log("Entering Demand.persist_to_file method", LogLevels.LOG_LEVEL_DEBUG)
+
         return self.economic + self.executive + self.first_class
 
 
@@ -34,6 +39,8 @@ def create_demand_from_dict(data_dict: Dict) -> Demand:
     :param data_dict:
     :return:
     """
+    log("Entering create_demand_from_dict method", LogLevels.LOG_LEVEL_DEBUG)
+
     demand = Demand()
     demand.unserialize(data_dict)
 

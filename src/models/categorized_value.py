@@ -1,4 +1,5 @@
 from models.base_model import BaseModel
+from modules.logger import log, LogLevels
 
 
 class CategorizedValue(BaseModel):
@@ -17,6 +18,8 @@ class CategorizedValue(BaseModel):
         Overrides the original string conversion method to retrieve the total sum of internal values instead
         :return:
         """
+        log("Entering CategorizedValue.__str__ method", LogLevels.LOG_LEVEL_DEBUG)
+
         return '{}'.format(self.economic + self.executive + self.first_class + self.cargo)
 
     def __eq__(self, other: "CategorizedValue"):
@@ -25,6 +28,8 @@ class CategorizedValue(BaseModel):
         :param other:
         :return:
         """
+        log("Entering CategorizedValue.__eq__ method", LogLevels.LOG_LEVEL_DEBUG)
+
         economic_diff = abs(self.economic - other.economic)
         executive_diff = abs(self.executive - other.executive)
         first_class_diff = abs(self.first_class - other.first_class)

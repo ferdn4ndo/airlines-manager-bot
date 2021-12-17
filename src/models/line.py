@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+
 from typing import Dict
 
 from models.airport import create_airport_from_dict, Airport
@@ -56,6 +57,7 @@ class Line(BaseModel):
         Line class constructor
         :param kwargs:
         """
+        log("Instantiating Line class", LogLevels.LOG_LEVEL_DEBUG)
         super(Line, self).__init__(**kwargs)
 
         if 'id' in kwargs:
@@ -66,6 +68,8 @@ class Line(BaseModel):
         Override the parent serialization method to resolve the nested objects
         :return:
         """
+        log("Entering Line.serialize method", LogLevels.LOG_LEVEL_DEBUG)
+
         return {
             'id': self.id,
             'name': self.name,
@@ -91,6 +95,8 @@ class Line(BaseModel):
         :param data_dict:
         :return:
         """
+        log("Entering Line.unserialize method", LogLevels.LOG_LEVEL_DEBUG)
+
         special_fields = [
             'origin',
             'destination',
@@ -134,6 +140,8 @@ class Line(BaseModel):
         Load the resource from a file stored locally
         :return:
         """
+        log("Entering Line.load_from_file method", LogLevels.LOG_LEVEL_DEBUG)
+
         if self.id is None:
             raise ValueError("Cannot load line from file without ID!")
 
@@ -156,13 +164,15 @@ class Line(BaseModel):
         Persist the resource to a file stored locally
         :return:
         """
+        log("Entering Line.persist_to_file method", LogLevels.LOG_LEVEL_DEBUG)
+
         if self.id is None:
             raise ValueError("Cannot persist line to file without ID!")
 
         lines_folder = os.getenv('LINES_OBJECTS_FOLDER', '/data/models/lines')
         filepath = os.path.join(lines_folder, f'{self.id}.json')
         save_dict_to_json(input_dict=self.serialize(), output_filepath=filepath)
-        log(f"Persisted line ID {self.id} to file {filepath}!")
+        log(f"Persisted line ID {self.id} to file {filepath}!", LogLevels.LOG_LEVEL_DEBUG)
 
 
 def create_line_from_dict(data_dict: Dict) -> Line:
@@ -171,6 +181,8 @@ def create_line_from_dict(data_dict: Dict) -> Line:
     :param data_dict:
     :return:
     """
+    log("Entering create_price_from_dict method", LogLevels.LOG_LEVEL_DEBUG)
+
     line = Line()
     line.unserialize(data_dict)
 

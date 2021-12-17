@@ -5,10 +5,10 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from typing import Dict
 
-from .file import save_dict_to_json, save_error_dump_file
-from .logger import log, LogLevels
-from .session_manager import SessionManager
-from .strings import sanitize_text
+from modules.file import save_dict_to_json, save_error_dump_file
+from modules.logger import log, LogLevels
+from modules.session_manager import SessionManager
+from modules.strings import sanitize_text
 
 
 def get_free_card_holder_if_available(session_manager: SessionManager):
@@ -17,6 +17,7 @@ def get_free_card_holder_if_available(session_manager: SessionManager):
     :param session_manager:
     :return:
     """
+    log("Entering get_free_card_holder_if_available method", LogLevels.LOG_LEVEL_DEBUG)
     if not is_free_card_holder_available(session_manager=session_manager):
         return
 
@@ -30,6 +31,7 @@ def is_free_card_holder_available(session_manager: SessionManager) -> bool:
     :param session_manager:
     :return:
     """
+    log("Entering is_free_card_holder_available method", LogLevels.LOG_LEVEL_DEBUG)
     card_holder_response = session_manager.request(
         url='http://tycoon.airlines-manager.com/shop/cardholder',
         method=SessionManager.Methods.GET,
@@ -57,6 +59,7 @@ def open_free_card_holder(session_manager: SessionManager) -> Dict:
     :param session_manager:
     :return:
     """
+    log("Entering open_free_card_holder method", LogLevels.LOG_LEVEL_DEBUG)
     card_holder_page_response = session_manager.request(
         url='http://tycoon.airlines-manager.com/shop/cardholder',
         method=SessionManager.Methods.GET,
@@ -64,7 +67,7 @@ def open_free_card_holder(session_manager: SessionManager) -> Dict:
             'Referer': 'http://tycoon.airlines-manager.com/home',
         },
     )
-    log(f'Card holder page response got {len(card_holder_page_response.text)} bytes!')
+    log(f'Card holder page response got {len(card_holder_page_response.text)} bytes!', LogLevels.LOG_LEVEL_NOTICE)
 
     # ToDo: Discover how to find the localized URL from the previous page
     free_card_url = 'http://tycoon.airlines-manager.com/shop/buycards/5/0/Econ%C3%B4mica'
@@ -79,7 +82,10 @@ def open_free_card_holder(session_manager: SessionManager) -> Dict:
             'X-Requested-With': 'XMLHttpRequest',
         },
     )
-    log(f'Free card holder modal response got {len(free_card_holder_modal_response.text)} bytes!')
+    log(
+        f'Free card holder modal response got {len(free_card_holder_modal_response.text)} bytes!',
+        LogLevels.LOG_LEVEL_NOTICE
+    )
 
     free_card_holder_modal_response_bs = BeautifulSoup(free_card_holder_modal_response.text, 'html.parser')
     free_card_csrf_token_input = free_card_holder_modal_response_bs.find('input', attrs={'id': 'form__token'})
@@ -102,7 +108,10 @@ def open_free_card_holder(session_manager: SessionManager) -> Dict:
             'X-Requested-With': 'XMLHttpRequest',
         },
     )
-    log(f'Free card holder opening response got {len(free_card_holder_opening_response.text)} bytes!')
+    log(
+        f'Free card holder opening response got {len(free_card_holder_opening_response.text)} bytes!',
+        LogLevels.LOG_LEVEL_NOTICE
+    )
 
     parsed_results = parse_card_holder_bonuses(free_card_holder_opening_response.text)
 
@@ -117,6 +126,7 @@ def parse_card_holder_bonuses(card_holder_response: str) -> Dict:
     :param card_holder_response:
     :return:
     """
+    log("Entering parse_card_holder_bonuses method", LogLevels.LOG_LEVEL_DEBUG)
     bonuses_response_bs = BeautifulSoup(card_holder_response, 'html.parser')
 
     bonus_container = bonuses_response_bs.find('div', attrs={'id': 'bonusCards-container'})
@@ -140,6 +150,7 @@ def parse_card_holder_bonus(bonus_bs: BeautifulSoup) -> Dict:
     :param bonus_bs:
     :return:
     """
+    log("Entering parse_card_holder_bonus method", LogLevels.LOG_LEVEL_DEBUG)
     bonus_div = bonus_bs.find('div', attrs={'class': 'front-side-title textFill'})
     if bonus_div is None:
         log("Aborting card hold opening as the bonus div was not found!", LogLevels.LOG_LEVEL_ERROR)
@@ -168,6 +179,7 @@ def get_bonus_type_from_image_src(bonus_image_src: str):
     :param bonus_image_src:
     :return:
     """
+    log("Entering get_bonus_type_from_image_src method", LogLevels.LOG_LEVEL_DEBUG)
     image_src_parts = bonus_image_src.split('/')
 
     if image_src_parts[-1] == 'researchDollars.png':
@@ -185,6 +197,7 @@ def save_card_holder_results(parsed_results: Dict):
     :param parsed_results:
     :return:
     """
+    log("Entering save_card_holder_results method", LogLevels.LOG_LEVEL_DEBUG)
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     filename = f'card_holder_results__{timestamp}.json'
     filepath = os.path.join(os.getenv('CARD_HOLD_RESULTS_FOLDER', '/data/card_hold_results'), filename)

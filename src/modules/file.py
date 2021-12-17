@@ -2,13 +2,12 @@ import csv
 import json
 import os
 import pickle
-from datetime import datetime
 
+from datetime import datetime
+from requests.cookies import RequestsCookieJar
 from typing import Dict
 
-from requests.cookies import RequestsCookieJar
-
-from modules.logger import log
+from modules.logger import log, LogLevels
 
 
 class FileMode:
@@ -32,6 +31,7 @@ def save_dict_to_csv(input_dict, output_filepath, file_mode: str = FileMode.FILE
     :param file_mode:
     :return:
     """
+    log("Entering save_dict_to_csv method", LogLevels.LOG_LEVEL_DEBUG)
     folder = os.path.dirname(output_filepath)
     os.makedirs(folder, exist_ok=True)
 
@@ -54,6 +54,7 @@ def save_dict_to_json(input_dict: Dict, output_filepath: str, file_mode: str = F
     :param file_mode:
     :return:
     """
+    log("Entering save_dict_to_json method", LogLevels.LOG_LEVEL_DEBUG)
     folder = os.path.dirname(output_filepath)
     os.makedirs(folder, exist_ok=True)
 
@@ -69,6 +70,7 @@ def save_text_to_file(input_text: str, output_filepath: str, file_mode: str = Fi
     :param file_mode:
     :return:
     """
+    log("Entering save_text_to_file method", LogLevels.LOG_LEVEL_DEBUG)
     folder = os.path.dirname(output_filepath)
     os.makedirs(folder, exist_ok=True)
 
@@ -82,8 +84,9 @@ def check_if_file_exists(filepath: str):
     :param filepath:
     :return:
     """
+    log("Entering check_if_file_exists method", LogLevels.LOG_LEVEL_DEBUG)
     if not os.path.isfile(filepath):
-        log(f"Unable to locate file {filepath}!")
+        log(f"Unable to locate file {filepath}!", LogLevels.LOG_LEVEL_ERROR)
         raise FileNotFoundError(f"Unable to locate file {filepath}!")
 
 
@@ -94,6 +97,7 @@ def read_text_file(filepath: str, file_mode: str = FileMode.FILE_MODE_READ):
     :param file_mode:
     :return:
     """
+    log("Entering read_text_file method", LogLevels.LOG_LEVEL_DEBUG)
     check_if_file_exists(filepath)
 
     with open(filepath, file_mode) as f:
@@ -109,6 +113,7 @@ def read_binary_file(filepath: str, file_mode: str = FileMode.FILE_MODE_READ + F
     :param file_mode:
     :return:
     """
+    log("Entering read_binary_file method", LogLevels.LOG_LEVEL_DEBUG)
     check_if_file_exists(filepath)
 
     with open(filepath, file_mode) as f:
@@ -122,6 +127,7 @@ def read_cookies_file() -> RequestsCookieJar:
     Reads the cookies data file into a RequestsCookieJar object to be used with authorized requests.
     :return:
     """
+    log("Entering read_cookies_file method", LogLevels.LOG_LEVEL_DEBUG)
     return read_binary_file(filepath=os.getenv('COOKIES_FILEPATH', '/data/cookies.dat'))
 
 
@@ -131,6 +137,7 @@ def save_cookies_file(cookies: RequestsCookieJar):
     :param cookies:
     :return:
     """
+    log("Entering save_cookies_file method", LogLevels.LOG_LEVEL_DEBUG)
     cookies_filepath = os.getenv('COOKIES_FILEPATH', '/data/cookies.dat')
     with open(cookies_filepath, 'wb') as cookies_file:
         pickle.dump(cookies, cookies_file)
@@ -143,6 +150,7 @@ def save_error_dump_file(dump: str, tag: str = 'dump'):
     :param tag:
     :return:
     """
+    log("Entering save_error_dump_file method", LogLevels.LOG_LEVEL_DEBUG)
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     filename = '{}_{}.txt'.format(timestamp, tag)
     filepath = os.path.join(os.getenv('ERROR_DUMPS_FOLDER', '/data/error_dumps'), filename)

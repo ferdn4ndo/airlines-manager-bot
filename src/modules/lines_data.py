@@ -38,10 +38,10 @@ def update_line_data(line: Line, session_manager: SessionManager):
     log("Entering update_line_data method", LogLevels.LOG_LEVEL_DEBUG)
     log(f"Updating data for line ID {line.id}")
 
-    log(f"Updating basic data for line ID {line.id}", LogLevels.LOG_LEVEL_DEBUG)
+    log(f"Updating basic data for line ID {line.id}", LogLevels.LOG_LEVEL_NOTICE)
     update_basic_data(line=line, session_manager=session_manager)
 
-    log(f"Updating marketing data for line ID {line.id}", LogLevels.LOG_LEVEL_DEBUG)
+    log(f"Updating marketing data for line ID {line.id}", LogLevels.LOG_LEVEL_NOTICE)
     update_marketing_data(line=line, session_manager=session_manager)
 
     if line.reliability_level > 50:

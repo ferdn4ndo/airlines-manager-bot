@@ -158,7 +158,7 @@ def parse_card_holder_bonus(bonus_bs: BeautifulSoup) -> Dict:
         raise ReferenceError("Div not found in the bonus card container")
 
     bonus_type = 'OTHER'
-    bonus_text = sanitize_text(bonus_div.string)
+    bonus_text = sanitize_text(bonus_div.text)
 
     bonus_image = bonus_div.find('img')
     if bonus_image is None:

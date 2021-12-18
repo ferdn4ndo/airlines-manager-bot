@@ -157,15 +157,14 @@ def parse_card_holder_bonus(bonus_bs: BeautifulSoup) -> Dict:
         save_error_dump_file(dump=bonus_bs.text, tag='card_holder_bonus_div_not_found')
         raise ReferenceError("Div not found in the bonus card container")
 
+    bonus_type = 'OTHER'
+    bonus_text = sanitize_text(bonus_div.string)
+
     bonus_image = bonus_div.find('img')
     if bonus_image is None:
-        log("Aborting card hold opening as the bonus image was not found!", LogLevels.LOG_LEVEL_ERROR)
-        save_error_dump_file(dump=bonus_bs.text, tag='card_holder_bonus_img_not_found')
-        raise ReferenceError("Image not found in the bonus card container")
-
-    bonus_image_src = bonus_image['src']
-    bonus_type = get_bonus_type_from_image_src(bonus_image_src)
-    bonus_text = sanitize_text(bonus_div.string)
+        log("No image on card hold bonus opening!", LogLevels.LOG_LEVEL_WARNING)
+    else:
+        bonus_type = get_bonus_type_from_image_src(bonus_image['src'])
 
     return {
         'bonus_type': bonus_type,

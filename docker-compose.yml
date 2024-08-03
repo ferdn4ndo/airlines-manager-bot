@@ -11,3 +11,8 @@ services:
     volumes:
       - ./src:/code/
       - ./data:/data/
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true

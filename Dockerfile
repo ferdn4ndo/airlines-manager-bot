@@ -1,6 +1,8 @@
 FROM python:3-alpine
 LABEL maintaner="Fernando Constantino <const.fernando@gmail.com>"
 
+# Based on https://www.caktusgroup.com/blog/2017/03/14/production-ready-dockerfile-your-python-django-app/
+
 # Setting PYTHONUNBUFFERED to a non empty value ensures that the python output is sent straight to terminal (e.g. your
 # container log) without being first buffered and that you can see the output of your application (e.g. django logs) in
 # real time. This also ensures that no partial output is held in a buffer somewhere and never written in case the python
@@ -9,15 +11,46 @@ LABEL maintaner="Fernando Constantino <const.fernando@gmail.com>"
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
+RUN mkdir /code/
 WORKDIR /code/
 
+# Copy in your requirements file
 ADD requirements.txt /code/requirements.txt
 
 ENV LIBRARY_PATH=/lib:/usr/lib
 
+# Install packages before requirements (both run and build ones)
 RUN set -ex \
+  && apk add --no-cache --virtual .build-deps \
+     gcc \
+     musl-dev \
+     zlib-dev \
+     py-pip \
+     postgresql-dev \
+  && apk add --no-cache \
+     bash \
+     curl \
+     jq \
+     gettext \
+     build-base \
+     openssl-dev \
+     postgresql-libs \
+     postgresql-client \
+     util-linux \
+  && apk add --no-cache \
+      --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
+      --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
   && python -m pip install -U --force-reinstall pip \
   && pip install --no-cache-dir -r /code/requirements.txt \
+  && apk --purge del .build-deps \
   && rm -rf /tmp/requirements.txt
+
+RUN adduser -D user
+
+USER user
+
+COPY ./src /code
+
+EXPOSE 5000
 
 CMD ["/bin/sh", "entrypoint.sh"]
